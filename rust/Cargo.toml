@@ -1,0 +1,9 @@
+[package]
+name = "rt_motion_ipc"
+version = "0.1.0"
+edition = "2021"
+description = "Lock-free SPSC IPC demos + CAN-FD framing for a Brain/Bridge/Joint-MCU real-time robotics architecture"
+
+[dependencies]
+heapless = "0.8"
+rtrb = "0.4.0"
