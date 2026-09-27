@@ -1,0 +1,95 @@
+<svg viewBox="0 0 900 520" xmlns="http://www.w3.org/2000/svg" font-family="Menlo, Consolas, monospace">
+  <style>
+    .title { font-size: 18px; font-weight: bold; fill: #1a1a2e; }
+    .subtitle { font-size: 12px; fill: #555; }
+    .label { font-size: 12px; fill: #1a1a2e; }
+    .small { font-size: 10px; fill: #555; }
+    .cacheline-bad { fill: #fde2e1; stroke: #c0392b; stroke-width: 1.5; }
+    .cacheline-good { fill: #e3f6e8; stroke: #27ae60; stroke-width: 1.5; }
+    .cell-brain { fill: #ffd2cf; stroke: #c0392b; stroke-width: 1; }
+    .cell-bridge { fill: #ffb3ad; stroke: #c0392b; stroke-width: 1; }
+    .cell-pos { fill: #cdeed7; stroke: #27ae60; stroke-width: 1; }
+    .cell-vel { fill: #a9e0bb; stroke: #27ae60; stroke-width: 1; }
+    .cell-torque { fill: #86d3a2; stroke: #27ae60; stroke-width: 1; }
+  </style>
+
+  <text x="20" y="30" class="title">Array-of-Structs (the usual way)</text>
+  <text x="20" y="48" class="subtitle">JointStateAoS[7] — position/velocity/torque interleaved per joint</text>
+
+  <!-- AoS: one 64B cache line holding parts of joint0, joint1, joint2 -->
+  <rect x="20" y="65" width="512" height="50" class="cacheline-bad" rx="4"/>
+  <!-- joint0 full (24B): pos,vel,torque -->
+  <rect x="20" y="65" width="73" height="50" class="cell-brain"/>
+  <rect x="93" y="65" width="73" height="50" class="cell-brain"/>
+  <rect x="166" y="65" width="73" height="50" class="cell-brain"/>
+  <!-- joint1 full (24B) -->
+  <rect x="239" y="65" width="73" height="50" class="cell-bridge"/>
+  <rect x="312" y="65" width="73" height="50" class="cell-bridge"/>
+  <rect x="385" y="65" width="73" height="50" class="cell-bridge"/>
+  <!-- start of joint2 (16B of it) -->
+  <rect x="458" y="65" width="37" height="50" class="cell-brain" opacity="0.6"/>
+  <rect x="495" y="65" width="37" height="50" class="cell-brain" opacity="0.6"/>
+
+  <text x="56" y="94" text-anchor="middle" class="small">pos</text>
+  <text x="129" y="94" text-anchor="middle" class="small">vel</text>
+  <text x="202" y="94" text-anchor="middle" class="small">trq</text>
+  <text x="276" y="94" text-anchor="middle" class="small">pos</text>
+  <text x="349" y="94" text-anchor="middle" class="small">vel</text>
+  <text x="421" y="94" text-anchor="middle" class="small">trq</text>
+  <text x="476" y="94" text-anchor="middle" class="small">pos</text>
+  <text x="513" y="94" text-anchor="middle" class="small">..</text>
+
+  <text x="20" y="132" class="label" fill="#c0392b" font-weight="bold">↑ ONE 64-byte cache line</text>
+  <text x="20" y="150" class="small">joint[0] (Brain writes: IK output) and joint[1] (Bridge reads: EtherCAT tx) share this line.</text>
+  <text x="20" y="166" class="small">Every Brain write invalidates the line in the Bridge core's cache — false sharing, even though</text>
+  <text x="20" y="182" class="small">the two threads never touch each other's actual data.</text>
+
+  <text x="20" y="235" class="title">Struct-of-Arrays, cache-line padded (this repo's JointStateSoAPadded)</text>
+  <text x="20" y="253" class="subtitle">position[8], velocity[8], torque[8] — each field its own aligned 64-byte block</text>
+
+  <!-- SoA: three separate 64B-aligned lines -->
+  <rect x="20" y="270" width="256" height="50" class="cacheline-good" rx="4"/>
+  <rect x="20" y="270" width="32" height="50" class="cell-pos"/>
+  <rect x="52" y="270" width="32" height="50" class="cell-pos"/>
+  <rect x="84" y="270" width="32" height="50" class="cell-pos"/>
+  <rect x="116" y="270" width="32" height="50" class="cell-pos"/>
+  <rect x="148" y="270" width="32" height="50" class="cell-pos"/>
+  <rect x="180" y="270" width="32" height="50" class="cell-pos"/>
+  <rect x="212" y="270" width="32" height="50" class="cell-pos"/>
+  <rect x="244" y="270" width="32" height="50" class="cell-pos"/>
+  <text x="148" y="299" text-anchor="middle" class="small">position[0..8] — exactly 64 bytes</text>
+
+  <rect x="20" y="335" width="256" height="50" class="cacheline-good" rx="4"/>
+  <rect x="20" y="335" width="32" height="50" class="cell-vel"/>
+  <rect x="52" y="335" width="32" height="50" class="cell-vel"/>
+  <rect x="84" y="335" width="32" height="50" class="cell-vel"/>
+  <rect x="116" y="335" width="32" height="50" class="cell-vel"/>
+  <rect x="148" y="335" width="32" height="50" class="cell-vel"/>
+  <rect x="180" y="335" width="32" height="50" class="cell-vel"/>
+  <rect x="212" y="335" width="32" height="50" class="cell-vel"/>
+  <rect x="244" y="335" width="32" height="50" class="cell-vel"/>
+  <text x="148" y="364" text-anchor="middle" class="small">velocity[0..8] — its own cache line</text>
+
+  <rect x="20" y="400" width="256" height="50" class="cacheline-good" rx="4"/>
+  <rect x="20" y="400" width="32" height="50" class="cell-torque"/>
+  <rect x="52" y="400" width="32" height="50" class="cell-torque"/>
+  <rect x="84" y="400" width="32" height="50" class="cell-torque"/>
+  <rect x="116" y="400" width="32" height="50" class="cell-torque"/>
+  <rect x="148" y="400" width="32" height="50" class="cell-torque"/>
+  <rect x="180" y="400" width="32" height="50" class="cell-torque"/>
+  <rect x="212" y="400" width="32" height="50" class="cell-torque"/>
+  <rect x="244" y="400" width="32" height="50" class="cell-torque"/>
+  <text x="148" y="429" text-anchor="middle" class="small">torque[0..8] — its own cache line</text>
+
+  <text x="320" y="299" class="small" fill="#27ae60">Reading all 7 joint</text>
+  <text x="320" y="315" class="small" fill="#27ae60">positions for the EtherCAT</text>
+  <text x="320" y="331" class="small" fill="#27ae60">frame touches ONLY this line —</text>
+  <text x="320" y="347" class="small" fill="#27ae60">linear stride, prefetcher-friendly,</text>
+  <text x="320" y="363" class="small" fill="#27ae60">no unrelated vel/torque bytes</text>
+  <text x="320" y="379" class="small" fill="#27ae60">pulled in, and no thread touching</text>
+  <text x="320" y="395" class="small" fill="#27ae60">velocity/torque can ever false-share</text>
+  <text x="320" y="411" class="small" fill="#27ae60">with a reader of position[].</text>
+
+  <text x="20" y="485" class="label" font-weight="bold">Same technique, applied a second time to the ring buffer's OWN control state:</text>
+  <text x="20" y="503" class="small">head/tail atomics in RingBuffer are each alignas(64)-padded for the identical reason — see lockfree_shm_ipc.cpp.</text>
+</svg>
