@@ -44,9 +44,7 @@ docs/   diagrams, and first-person interview notes on the design decisions
   Brain tier: a hand-rolled SPSC ring buffer in POSIX shared memory vs. a
   TCP loopback socket, plus a standalone benchmark isolating cache-line
   false sharing (`alignas(64)` vs. not).
-- **[`docs/interview-notes.md`](docs/interview-notes.md)** — first-person
-  notes on *why* each decision was made, written to talk through in an
-  interview rather than just to read.
+
 
 ## The comparison, side by side
 
