@@ -80,7 +80,7 @@ section — see the code comments in each `*_bridge.rs`/`*_ipc.cpp` file.
 
 ### Cache layout: why AoS → SoA matters independently of locking
 
-<img src="docs/images/cache-layout-aos-vs-soa.svg" alt="AoS vs SoA cache-line layout diagram" width="700"/>
+<img src="/images/cache-layout-aos-vs-soa.svg" alt="AoS vs SoA cache-line layout diagram" width="700"/>
 
 Modern CPUs fetch memory in 64-byte lines. An Array-of-Structs layout gives
 you no control over which joints share a line — Joint 0 (Brain writes) and
